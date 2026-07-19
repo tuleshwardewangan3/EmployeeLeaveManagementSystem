@@ -87,4 +87,5 @@ pipeline {
             echo 'CI/CD pipeline failed. Check the console logs.'
         }
     }
+} 
 }
