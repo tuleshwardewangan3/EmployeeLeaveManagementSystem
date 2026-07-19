@@ -17,6 +17,7 @@ pipeline {
                     test -f backend/app.py
                     test -f backend/Dockerfile
                     test -f backend/requirements.txt
+                    test -f backend/init.sql
                     test -f docker-compose.yml
                 '''
             }
@@ -54,15 +55,37 @@ pipeline {
                         variable: 'DB_PASSWORD'
                     )
                 ]) {
+
                     withEnv([
                         'DB_USER=root',
                         'DB_NAME=employee_leave_db'
                     ]) {
+
                         sh '''
                             docker compose down || true
                             docker compose up -d --build
                         '''
                     }
+                }
+            }
+        }
+
+        stage('Initialize Database') {
+            steps {
+                echo 'Creating database tables and initial data...'
+
+                withCredentials([
+                    string(
+                        credentialsId: 'employee-leave-db-password',
+                        variable: 'DB_PASSWORD'
+                    )
+                ]) {
+
+                    sh '''
+                        docker exec -i employee-leave-mysql \
+                        mysql -uroot -p${DB_PASSWORD} employee_leave_db \
+                        < backend/init.sql
+                    '''
                 }
             }
         }
@@ -79,6 +102,7 @@ pipeline {
     }
 
     post {
+
         success {
             echo 'CI/CD pipeline completed successfully.'
         }
