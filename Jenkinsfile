@@ -39,8 +39,7 @@ pipeline {
                 echo 'Verifying Docker image...'
 
                 sh '''
-                    docker images \
-                    employee-leave-backend:${BUILD_NUMBER}
+                    docker images employee-leave-backend:${BUILD_NUMBER}
                 '''
             }
         }
@@ -77,6 +76,7 @@ pipeline {
                 '''
             }
         }
+    }
 
     post {
         success {
@@ -87,5 +87,4 @@ pipeline {
             echo 'CI/CD pipeline failed. Check the console logs.'
         }
     }
-} 
 }
