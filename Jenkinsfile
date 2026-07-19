@@ -44,15 +44,48 @@ pipeline {
                 '''
             }
         }
+
+        stage('Deploy') {
+            steps {
+                echo 'Deploying application using Docker Compose...'
+
+                withCredentials([
+                    string(
+                        credentialsId: 'employee-leave-db-password',
+                        variable: 'DB_PASSWORD'
+                    )
+                ]) {
+                    withEnv([
+                        'DB_USER=root',
+                        'DB_NAME=employee_leave_db'
+                    ]) {
+                        sh '''
+                            docker compose down || true
+                            docker compose up -d --build
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                echo 'Checking deployed containers...'
+
+                sh '''
+                    docker compose ps
+                '''
+            }
+        }
     }
 
     post {
         success {
-            echo 'CI pipeline completed successfully.'
+            echo 'CI/CD pipeline completed successfully.'
         }
 
         failure {
-            echo 'CI pipeline failed. Check the console logs.'
+            echo 'CI/CD pipeline failed. Check the console logs.'
         }
     }
 }
