@@ -73,11 +73,10 @@ pipeline {
                 echo 'Checking deployed containers...'
 
                 sh '''
-                    docker compose ps
+                    docker ps --filter "name=employee-leave"
                 '''
             }
         }
-    }
 
     post {
         success {
