@@ -71,23 +71,15 @@ pipeline {
         }
 
         stage('Initialize Database') {
-            steps {
-                echo 'Creating database tables and initial data...'
-
-                withCredentials([
-                    string(
-                        credentialsId: 'employee-leave-db-password',
-                        variable: 'DB_PASSWORD'
-                    )
-                ]) {
+                steps {
+                    echo 'Creating database tables and initial data...'
 
                     sh '''
                         docker exec -i employee-leave-mysql \
-                        mysql -uroot -p${DB_PASSWORD} employee_leave_db \
+                        sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" employee_leave_db' \
                         < backend/init.sql
                     '''
                 }
-            }
         }
 
         stage('Verify Deployment') {
