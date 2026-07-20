@@ -45,6 +45,24 @@ pipeline {
             }
         }
 
+        stage('Capture Current Version') {
+            steps {
+                echo 'Capturing currently deployed backend image...'
+
+                script {
+                    env.PREVIOUS_IMAGE = sh(
+                        script: '''
+                            docker inspect employee-leave-backend \
+                            --format='{{.Config.Image}}' 2>/dev/null || true
+                        ''',
+                        returnStdout: true
+                    ).trim()
+
+                    echo "Previous image: ${env.PREVIOUS_IMAGE}"
+                }
+            }
+        }
+
         stage('Deploy') {
             steps {
                 echo 'Deploying exact Docker Image built by Jenkins..'
@@ -87,29 +105,66 @@ pipeline {
             steps {
                 echo 'Checking application health...'
 
-                sh '''
-                    MAX_RETRIES=10
-                    RETRY_COUNT=1
+                script {
+                    def healthStatus = sh(
+                        script: '''
+                            MAX_RETRIES=10
+                            RETRY_COUNT=1
 
-                    while [ $RETRY_COUNT -le $MAX_RETRIES ]
-                    do
-                        echo "Health check attempt $RETRY_COUNT of $MAX_RETRIES"
+                            while [ $RETRY_COUNT -le $MAX_RETRIES ]
+                            do
+                                echo "Health check attempt $RETRY_COUNT of $MAX_RETRIES"
 
-                        if curl -fsS http://host.docker.internal:5000/employees
-                        then
-                            echo "Application health check passed."
-                            exit 0
-                        fi
+                                if curl -fsS http://host.docker.internal:5000/employees
+                                then
+                                    echo "Application health check passed."
+                                    exit 0
+                                fi
 
-                        echo "Application not ready yet. Waiting 5 seconds..."
-                        sleep 5
+                                echo "Application not ready yet. Waiting 5 seconds..."
+                                sleep 5
+                                RETRY_COUNT=$((RETRY_COUNT + 1))
+                            done
 
-                        RETRY_COUNT=$((RETRY_COUNT + 1))
-                    done
+                            exit 1
+                        ''',
+                        returnStatus: true
+                    )
 
-                    echo "Application health check failed."
-                    exit 1
-                '''
+                    if (healthStatus != 0) {
+
+                        echo 'Health check failed.'
+
+                        if (env.PREVIOUS_IMAGE?.trim()) {
+
+                            echo "Rolling back to ${env.PREVIOUS_IMAGE}"
+
+                            withCredentials([
+                                string(
+                                    credentialsId: 'employee-leave-db-password',
+                                    variable: 'DB_PASSWORD'
+                                )
+                            ]) {
+                                withEnv([
+                                    'DB_USER=root',
+                                    'DB_NAME=employee_leave_db',
+                                    "ROLLBACK_IMAGE=${env.PREVIOUS_IMAGE}"
+                                ]) {
+                                    sh '''
+                                        export IMAGE_TAG=$(echo "$ROLLBACK_IMAGE" | cut -d: -f2)
+
+                                        docker compose down || true
+                                        docker compose up -d
+                                    '''
+                                }
+                            }
+
+                            error('Deployment failed health check. Rolled back to previous image.')
+                        }
+
+                        error('Deployment failed health check and no previous image was available.')
+                    }
+                }
             }
         }
 
