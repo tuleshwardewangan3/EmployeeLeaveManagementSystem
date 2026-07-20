@@ -115,7 +115,7 @@ pipeline {
                             do
                                 echo "Health check attempt $RETRY_COUNT of $MAX_RETRIES"
 
-                                if curl -fsS http://host.docker.internal:5000/nonexistent
+                                if curl -fsS http://host.docker.internal:5000/employees
                                 then
                                     echo "Application health check passed."
                                     exit 0
