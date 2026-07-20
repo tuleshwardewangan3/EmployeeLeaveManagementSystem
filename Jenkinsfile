@@ -83,6 +83,36 @@ pipeline {
                 }
         }
 
+        stage('Health Check') {
+            steps {
+                echo 'Checking application health...'
+
+                sh '''
+                    MAX_RETRIES=10
+                    RETRY_COUNT=1
+
+                    while [ $RETRY_COUNT -le $MAX_RETRIES ]
+                    do
+                        echo "Health check attempt $RETRY_COUNT of $MAX_RETRIES"
+
+                        if curl -fsS http://host.docker.internal:5000/employees
+                        then
+                            echo "Application health check passed."
+                            exit 0
+                        fi
+
+                        echo "Application not ready yet. Waiting 5 seconds..."
+                        sleep 5
+
+                        RETRY_COUNT=$((RETRY_COUNT + 1))
+                    done
+
+                    echo "Application health check failed."
+                    exit 1
+                '''
+            }
+        }
+
         stage('Verify Deployment') {
             steps {
                 echo 'Checking deployed containers...'
