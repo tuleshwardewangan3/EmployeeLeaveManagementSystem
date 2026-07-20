@@ -59,7 +59,7 @@ pipeline {
                     withEnv([
                         'DB_USER=root',
                         'DB_NAME=employee_leave_db'
-                        "IMAGE_TAG=${BUILD_NUMBER}"
+                        'IMAGE_TAG=${BUILD_NUMBER}'
                     ]) {
 
                         sh '''
