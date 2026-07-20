@@ -14,3 +14,5 @@ A full-stack DevOps project built using:
 - Grafana
 
 This project is being developed as part of a hands-on DevOps learning journey.
+
+CI/CD pipeline automation tested successfully.
