@@ -34,6 +34,3 @@ WHERE NOT EXISTS (
     SELECT 1 FROM employees
     WHERE name = 'Rahul' AND department = 'Finance'
 );
-
-DELETE FROM employees
-WHERE id IN (4, 5, 6);
