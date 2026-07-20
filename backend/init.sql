@@ -15,7 +15,25 @@ CREATE TABLE IF NOT EXISTS leaves (
 );
 
 INSERT INTO employees (name, department)
-VALUES
-('Amit', 'IT'),
-('Priya', 'HR'),
-('Rahul', 'Finance');
+SELECT 'Amit', 'IT'
+WHERE NOT EXISTS (
+    SELECT 1 FROM employees
+    WHERE name = 'Amit' AND department = 'IT'
+);
+
+INSERT INTO employees (name, department)
+SELECT 'Priya', 'HR'
+WHERE NOT EXISTS (
+    SELECT 1 FROM employees
+    WHERE name = 'Priya' AND department = 'HR'
+);
+
+INSERT INTO employees (name, department)
+SELECT 'Rahul', 'Finance'
+WHERE NOT EXISTS (
+    SELECT 1 FROM employees
+    WHERE name = 'Rahul' AND department = 'Finance'
+);
+
+DELETE FROM employees
+WHERE id IN (4, 5, 6);
