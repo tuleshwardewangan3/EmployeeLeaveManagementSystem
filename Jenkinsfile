@@ -47,7 +47,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo 'Deploying application using Docker Compose...'
+                echo 'Deploying exact Docker Image built by Jenkins..'
 
                 withCredentials([
                     string(
@@ -59,11 +59,12 @@ pipeline {
                     withEnv([
                         'DB_USER=root',
                         'DB_NAME=employee_leave_db'
+                        "IMAGE_TAG=${BUILD_NUMBER}"
                     ]) {
 
                         sh '''
                             docker compose down || true
-                            docker compose up -d --build
+                            docker compose up -d
                         '''
                     }
                 }
